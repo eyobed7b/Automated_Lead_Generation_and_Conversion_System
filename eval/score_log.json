@@ -1,0 +1,15 @@
+[
+  {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "n_trials": 5,
+    "pass_at_1_mean": 0.4267,
+    "pass_at_1_ci_95_lower": 0.2295,
+    "pass_at_1_ci_95_upper": 0.6239,
+    "cost_per_run_usd": 0.2578,
+    "total_cost_usd": 1.2889,
+    "latency_p50_s": 4.91,
+    "latency_p95_s": 7.84,
+    "timestamp": "2026-04-22T17:04:28Z",
+    "mock": true
+  }
+]

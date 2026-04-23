@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  # Cal.com self-hosted calendar
+  calcom:
+    image: calcom/cal.com:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://calcom:calcom@calcom-db:5432/calcom
+      NEXTAUTH_SECRET: your-nextauth-secret-here
+      CALENDSO_ENCRYPTION_KEY: your-encryption-key-here
+      NEXT_PUBLIC_WEBAPP_URL: http://localhost:3000
+    depends_on:
+      - calcom-db
+    restart: unless-stopped
+
+  calcom-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: calcom
+      POSTGRES_PASSWORD: calcom
+      POSTGRES_DB: calcom
+    volumes:
+      - calcom-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Agent backend
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./seed:/app/seed:ro
+      - ./data:/app/data
+    depends_on:
+      - calcom
+    restart: unless-stopped
+
+volumes:
+  calcom-db-data:
