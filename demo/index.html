@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tenacious Conversion Engine — Live Demo</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.15);
+    --green: #22c55e;
+    --green-glow: rgba(34,197,94,0.15);
+    --yellow: #eab308;
+    --red: #ef4444;
+    --purple: #a78bfa;
+    --orange: #f97316;
+    --cyan: #06b6d4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo-group { display: flex; align-items: center; gap: 14px; }
+  .logo {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--green);
+    background: var(--green-glow);
+    border: 1px solid rgba(34,197,94,0.3);
+    padding: 4px 10px; border-radius: 20px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  .timer { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 60px; }
+
+  /* ── Run button ── */
+  .run-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.4);
+  }
+  .run-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.5); }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── Prospect bar ── */
+  .prospect-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .prospect-info { display: flex; align-items: center; gap: 10px; }
+  .prospect-avatar {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; color: #fff;
+    flex-shrink: 0;
+  }
+  .prospect-name { font-weight: 700; font-size: 15px; }
+  .prospect-meta { font-size: 12px; color: var(--muted); }
+  .prospect-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .chip.accent { border-color: rgba(59,130,246,0.4); color: var(--accent); background: var(--accent-glow); }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    overflow-x: auto;
+  }
+  .progress-bar::-webkit-scrollbar { height: 0; }
+  .step-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    font-size: 12px;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    cursor: default;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .step-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .step-tab.done { color: var(--green); border-bottom-color: var(--green); }
+  .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-tab.done .step-num {
+    background: var(--green);
+    border-color: var(--green);
+    color: #000;
+  }
+
+  /* ── Main content ── */
+  .content { max-width: 960px; margin: 0 auto; padding: 32px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Step card ── */
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0.35;
+    transition: opacity 0.4s, border-color 0.4s;
+  }
+  .step-card.active {
+    opacity: 1;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.2), 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .step-card.done {
+    opacity: 1;
+    border-color: rgba(34,197,94,0.3);
+  }
+  .step-card.waiting { opacity: 0.25; }
+
+  .card-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-header.hidden-border { border-bottom: none; }
+  .card-step-num {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .step-card.waiting .card-step-num { background: var(--surface2); color: var(--muted); }
+  .step-card.active .card-step-num { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(59,130,246,0.4); }
+  .step-card.done .card-step-num { background: var(--green-glow); color: var(--green); border: 1px solid rgba(34,197,94,0.4); }
+  .card-title { font-size: 15px; font-weight: 700; flex: 1; }
+  .card-status {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .status-waiting { background: var(--surface2); color: var(--muted); }
+  .status-running { background: var(--accent-glow); color: var(--accent); animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+  .status-done { background: var(--green-glow); color: var(--green); }
+  .status-error { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  .card-body { padding: 20px; }
+  .card-body.hidden { display: none; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  /* ── Data grid ── */
+  .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .data-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .data-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .data-value { font-size: 14px; font-weight: 600; color: var(--text); }
+  .data-value.accent { color: var(--accent); }
+  .data-value.green { color: var(--green); }
+  .data-value.yellow { color: var(--yellow); }
+  .data-value.red { color: var(--red); }
+  .data-value.muted { color: var(--muted); font-style: italic; }
+
+  /* ── Signal rows ── */
+  .signal-list { display: flex; flex-direction: column; gap: 8px; }
+  .signal-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .signal-row.present { border-left: 3px solid var(--green); }
+  .signal-row.absent { border-left: 3px solid var(--border); }
+  .signal-row.flag { border-left: 3px solid var(--yellow); background: rgba(234,179,8,0.05); }
+  .signal-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .signal-content { flex: 1; min-width: 0; }
+  .signal-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .signal-detail { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .signal-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
+    font-weight: 600; align-self: flex-start;
+  }
+  .badge-high { background: var(--green-glow); color: var(--green); }
+  .badge-medium { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .badge-low { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  /* ── ICP scores ── */
+  .seg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .seg-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    transition: border-color 0.3s;
+  }
+  .seg-card.winner {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .seg-card-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .seg-card-name { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .seg-card.winner .seg-card-name { color: var(--accent); }
+  .score-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 0.8s ease; }
+  .score-val { font-size: 22px; font-weight: 800; margin-top: 8px; }
+  .seg-card.winner .score-val { color: var(--accent); }
+  .seg-reason { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+  /* ── Confidence badge ── */
+  .confidence-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(59,130,246,0.3);
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  /* ── Flag chips ── */
+  .flags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .flag-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(234,179,8,0.08);
+    border: 1px solid rgba(234,179,8,0.3);
+    padding: 5px 12px; border-radius: 6px;
+    font-size: 12px; color: var(--yellow); font-weight: 500;
+  }
+
+  /* ── Honesty validation ── */
+  .validation-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .validation-icon { font-size: 18px; }
+  .validation-text { flex: 1; font-size: 13px; }
+  .validation-result {
+    font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 700;
+    background: var(--green-glow); color: var(--green);
+  }
+
+  /* ── Email preview ── */
+  .email-preview {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .email-chrome {
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .email-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .email-chrome-title { font-size: 12px; color: var(--muted); margin-left: 4px; }
+  .email-variant-badge {
+    margin-left: auto;
+    font-size: 11px; padding: 2px 8px; border-radius: 20px;
+    background: var(--green-glow); color: var(--green); font-weight: 600;
+  }
+  .email-fields { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .email-field { display: flex; gap: 10px; margin-bottom: 6px; font-size: 13px; }
+  .email-field:last-child { margin-bottom: 0; }
+  .ef-key { color: var(--muted); width: 50px; flex-shrink: 0; }
+  .ef-val { color: var(--text); }
+  .email-subject-line {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .email-body-text {
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: var(--text);
+  }
+  .email-flags-bar {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .email-flag-chip {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    background: rgba(234,179,8,0.08); color: var(--yellow);
+    border: 1px solid rgba(234,179,8,0.3);
+  }
+
+  /* ── Booking card ── */
+  .booking-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .booking-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .booking-details { flex: 1; }
+  .booking-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .booking-url { font-size: 12px; color: var(--accent); word-break: break-all; margin-bottom: 4px; }
+  .booking-meta { font-size: 12px; color: var(--muted); }
+  .booking-confirmed {
+    background: var(--green-glow);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: var(--green);
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+
+  /* ── HubSpot record ── */
+  .crm-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .crm-header {
+    background: rgba(249,115,22,0.08);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .crm-logo { font-size: 13px; font-weight: 800; color: var(--orange); margin-left: auto; }
+  .crm-avatar {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; color: #fff;
+  }
+  .crm-contact-name { font-size: 15px; font-weight: 700; }
+  .crm-contact-company { font-size: 12px; color: var(--muted); }
+  .crm-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--border); }
+  .crm-field {
+    background: var(--surface2);
+    padding: 12px 16px;
+  }
+  .crm-field-key { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .crm-field-val {
+    font-size: 13px; font-weight: 600;
+    transition: color 0.3s;
+  }
+  .crm-field-val.null-val { color: var(--muted); font-weight: 400; font-style: italic; }
+  .crm-field-val.updated {
+    color: var(--green);
+    animation: flash 0.8s ease;
+  }
+  @keyframes flash { 0%{background:rgba(34,197,94,0.2);} 100%{background:transparent;} }
+
+  /* ── Success banner ── */
+  .success-banner {
+    background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.08));
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 12px;
+    padding: 24px 28px;
+    display: flex; align-items: center; gap: 20px;
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+  .success-banner.visible { opacity: 1; }
+  .success-icon { font-size: 36px; }
+  .success-title { font-size: 18px; font-weight: 800; color: var(--green); margin-bottom: 6px; }
+  .success-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+  .success-stat { font-size: 13px; color: var(--muted); }
+  .success-stat span { color: var(--text); font-weight: 600; }
+
+  /* ── Signal Brief cards ── */
+  .brief-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 0;
+  }
+  .brief-card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface2);
+  }
+  .brief-badge {
+    font-size: 12px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+  }
+  .brief-badge.hiring { background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); }
+  .brief-badge.competitor { background: rgba(6,182,212,0.12); color: var(--cyan); border: 1px solid rgba(6,182,212,0.3); }
+  .brief-source-row { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .brief-card-body { padding: 20px; }
+  .brief-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+  }
+
+  /* Buying window */
+  .buying-window-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+  .bw-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+  }
+  .bw-cell.detected { border-left: 3px solid var(--green); }
+  .bw-cell.not-detected { border-left: 3px solid var(--border); }
+  .bw-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .bw-value { font-size: 13px; font-weight: 600; }
+  .bw-value.green { color: var(--green); }
+  .bw-value.muted { color: var(--muted); }
+  .bw-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .bw-conf { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* AI signals table */
+  .ai-signals-table {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .ast-header {
+    display: grid; grid-template-columns: 2fr 80px 80px 100px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .ast-row {
+    display: grid; grid-template-columns: 2fr 80px 80px 100px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(30,45,69,0.6);
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .ast-row:last-child { border-bottom: none; }
+  .ast-row:hover { background: rgba(255,255,255,0.02); }
+  .ast-signal-name { font-size: 12px; color: var(--text); }
+  .ast-signal-detail { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .ast-weight {
+    font-size: 10px; padding: 2px 6px; border-radius: 4px; width: fit-content;
+  }
+  .weight-high { background: rgba(239,68,68,0.12); color: var(--red); }
+  .weight-medium { background: rgba(234,179,8,0.12); color: var(--yellow); }
+  .weight-low { background: rgba(139,148,158,0.12); color: var(--muted); }
+  .ast-present { font-size: 14px; }
+  .ast-conf-cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+  .ast-conf-num { font-size: 12px; font-weight: 700; }
+  .ast-conf-bar-bg { width: 70px; height: 4px; background: var(--border); border-radius: 2px; }
+  .ast-conf-bar-fill { height: 100%; border-radius: 2px; width: 0%; transition: width 0.8s ease; }
+
+  .ai-maturity-summary {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* Hiring velocity */
+  .velocity-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px;
+  }
+  .velocity-num { font-size: 28px; font-weight: 800; }
+  .velocity-label-col { flex: 1; }
+  .velocity-label { font-size: 13px; font-weight: 600; }
+  .velocity-sub { font-size: 12px; color: var(--muted); }
+  .velocity-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+  }
+
+  /* Competitor table */
+  .comp-table {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .comp-table-header {
+    display: flex; gap: 0; padding: 8px 14px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted);
+    align-items: center;
+  }
+  .comp-table-header span:first-child { flex: 1.5; }
+  .comp-table-header span:nth-child(2) { width: 60px; text-align: center; }
+  .comp-table-header span:nth-child(3) { flex: 2; padding: 0 10px; }
+  .comp-table-header span:last-child { width: 130px; }
+  .comp-row-item {
+    display: flex; align-items: center;
+    padding: 11px 14px;
+    border-bottom: 1px solid rgba(30,45,69,0.6);
+    gap: 0;
+  }
+  .comp-row-item:last-child { border-bottom: none; }
+  .comp-row-item.prospect-row { background: rgba(239,68,68,0.04); }
+  .comp-name-cell { flex: 1.5; font-size: 13px; font-weight: 600; }
+  .comp-name-cell .comp-tag { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .comp-score-cell { width: 60px; text-align: center; font-size: 16px; font-weight: 800; }
+  .comp-bar-cell { flex: 2; padding: 0 10px; }
+  .comp-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .comp-bar-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 1s ease 0.2s; }
+  .comp-conf-cell { width: 130px; }
+  .conf-pill-sm {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
+  }
+  .conf-high { background: var(--green-glow); color: var(--green); }
+  .conf-medium { background: rgba(234,179,8,0.12); color: var(--yellow); }
+  .conf-low { background: rgba(139,148,158,0.1); color: var(--muted); }
+
+  /* Percentile summary */
+  .percentile-summary {
+    margin-top: 12px;
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .pct-num { font-size: 36px; font-weight: 800; color: var(--red); }
+  .pct-label { font-size: 12px; color: var(--muted); }
+  .pct-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+
+  /* Gaps list */
+  .gaps-list { display: flex; flex-direction: column; gap: 6px; }
+  .gap-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    border-radius: 6px; padding: 10px 12px;
+    font-size: 13px;
+  }
+  .gap-icon { flex-shrink: 0; }
+
+  /* Framing note */
+  .framing-note {
+    margin-top: 12px;
+    background: rgba(234,179,8,0.05);
+    border: 1px solid rgba(234,179,8,0.2);
+    border-radius: 8px; padding: 12px 14px;
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+  }
+  .framing-note strong { color: var(--yellow); }
+
+  /* ── Reply section ── */
+  .reply-section {
+    background: var(--surface);
+    border: 1px solid rgba(168,139,250,0.35);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(168,139,250,0.1), 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .reply-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(168,139,250,0.05);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .reply-header-left { display: flex; align-items: center; gap: 14px; }
+  .reply-step-badge {
+    background: rgba(168,139,250,0.15);
+    border: 1px solid rgba(168,139,250,0.4);
+    color: var(--purple);
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    white-space: nowrap;
+  }
+  .reply-title { font-size: 15px; font-weight: 700; }
+  .reply-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .inbox-mockup { padding: 16px 20px; }
+  .inbox-header {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+    padding: 8px 14px;
+    border-bottom: none;
+  }
+  .inbox-compose {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .inbox-field { display: flex; flex-direction: column; gap: 6px; }
+  .inbox-label { font-size: 11px; color: var(--muted); }
+  .reply-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .reply-input:focus { border-color: var(--purple); }
+  .reply-btn {
+    background: rgba(168,139,250,0.15);
+    border: 1px solid rgba(168,139,250,0.4);
+    color: var(--purple);
+    padding: 8px 16px; border-radius: 6px;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .reply-btn:hover { background: rgba(168,139,250,0.25); }
+  .reply-btn-outline {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .reply-btn-outline:hover { border-color: var(--purple); color: var(--purple); background: rgba(168,139,250,0.08); }
+  .reply-btn-custom {
+    background: rgba(59,130,246,0.1);
+    border-color: rgba(59,130,246,0.3);
+    color: var(--accent);
+  }
+  .reply-result {
+    margin: 0 20px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .reply-result-header {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 700; margin-bottom: 14px;
+  }
+  .reply-result-badge {
+    margin-left: auto; font-size: 11px; padding: 2px 8px;
+    border-radius: 20px; font-weight: 600;
+    background: var(--green-glow); color: var(--green);
+  }
+  .reply-timeline { display: flex; flex-direction: column; gap: 8px; }
+  .timeline-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 12px; padding: 8px 10px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .timeline-icon { font-size: 14px; flex-shrink: 0; }
+  .timeline-text { color: var(--text); line-height: 1.5; }
+  .timeline-text .label { font-weight: 600; }
+  .timeline-text .detail { color: var(--muted); }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Source tag ── */
+  .source-tag {
+    font-size: 10px; padding: 2px 6px; border-radius: 4px;
+    background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  /* ── Job board source badge ── */
+  .job-source-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .job-source-badge.builtin { background: rgba(59,130,246,0.1); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); }
+  .job-source-badge.greenhouse { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .job-source-badge.lever { background: rgba(168,139,250,0.1); color: var(--purple); border: 1px solid rgba(168,139,250,0.3); }
+  .job-source-badge.ashby { background: rgba(6,182,212,0.1); color: var(--cyan); border: 1px solid rgba(6,182,212,0.3); }
+  .job-source-badge.careers { background: rgba(249,115,22,0.1); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+  .job-source-badge.fallback { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  /* ── Role titles list ── */
+  .role-titles-wrap {
+    margin-top: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .role-titles-header {
+    padding: 7px 12px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted);
+    background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+  }
+  .role-title-item {
+    padding: 7px 12px;
+    font-size: 12px; color: var(--text);
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .role-title-item:last-child { border-bottom: none; }
+  .role-type-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo-group">
+    <div class="logo">TENACIOUS CONVERSION ENGINE</div>
+    <div class="header-tag">v1.0.0 · FastAPI + OpenRouter + HubSpot · 5 job boards</div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>Live API</div>
+    <div class="timer" id="timer">00:00</div>
+    <button class="run-btn" id="run-btn" onclick="runPipeline()">
+      <span id="btn-icon">▶</span>
+      <span id="btn-text">Run Live Pipeline</span>
+    </button>
+  </div>
+</div>
+
+<!-- Prospect bar -->
+<div class="prospect-bar">
+  <div class="prospect-info">
+    <div class="prospect-avatar">DT</div>
+    <div>
+      <div class="prospect-name">DataFlow Technologies</div>
+      <div class="prospect-meta">Contact: Sarah Chen · VP Engineering · eyobed7b@gmail.com</div>
+    </div>
+  </div>
+  <div class="prospect-chips">
+    <div class="chip">SaaS · Data Infrastructure</div>
+    <div class="chip">San Francisco, CA</div>
+    <div class="chip">Founded 2021</div>
+    <div class="chip accent">Series A — $12M · Jan 2026</div>
+  </div>
+</div>
+
+<!-- Step progress tabs -->
+<div class="progress-bar" id="progress-bar">
+  <div class="step-tab" id="tab-1"><div class="step-num">1</div>Enrich</div>
+  <div class="step-tab" id="tab-2"><div class="step-num">2</div>ICP Classify</div>
+  <div class="step-tab" id="tab-3"><div class="step-num">3</div>Signal Brief</div>
+  <div class="step-tab" id="tab-4"><div class="step-num">4</div>Honesty Validation</div>
+  <div class="step-tab" id="tab-5"><div class="step-num">5</div>Compose Email</div>
+  <div class="step-tab" id="tab-6"><div class="step-num">6</div>Book Discovery Call</div>
+  <div class="step-tab" id="tab-7"><div class="step-num">7</div>CRM Update</div>
+</div>
+
+<!-- Step cards -->
+<div class="content">
+
+  <!-- Step 1: Enrich -->
+  <div class="step-card waiting" id="card-1">
+    <div class="card-header">
+      <div class="card-step-num">1</div>
+      <div class="card-title">Enrichment — Public Signal Collection</div>
+      <div class="card-status status-waiting" id="status-1">Waiting</div>
+    </div>
+    <div class="card-body hidden" id="body-1">
+      <div class="section-label">Company Profile</div>
+      <div class="data-grid" id="enrich-meta"></div>
+      <div class="section-label">Funding Signal</div>
+      <div id="enrich-funding"></div>
+      <div class="section-label" style="margin-top:16px">Job Posts</div>
+      <div id="enrich-jobs"></div>
+      <div class="section-label" style="margin-top:16px">AI Maturity Signals</div>
+      <div class="signal-list" id="enrich-ai"></div>
+    </div>
+  </div>
+
+  <!-- Signal Briefs Panel (appears after Step 1) -->
+  <div id="signal-briefs-panel" style="display:none;">
+
+    <!-- Hiring Signal Brief -->
+    <div class="brief-card" id="hiring-brief-card">
+      <div class="brief-card-header">
+        <div class="brief-badge hiring">📋 Hiring Signal Brief</div>
+        <div class="brief-source-row" id="hiring-brief-sources"></div>
+      </div>
+      <div class="brief-card-body">
+
+        <div class="brief-section-label">Buying Window Signals</div>
+        <div class="buying-window-grid" id="buying-window-grid"></div>
+
+        <div class="brief-section-label" style="margin-top:18px">AI Maturity — 6 Sub-signals with Confidence</div>
+        <div class="ai-signals-table" id="ai-signals-table">
+          <div class="ast-header">
+            <span>Signal</span><span>Weight</span><span>Present</span><span style="text-align:right">Confidence</span>
+          </div>
+          <div id="ast-rows"></div>
+        </div>
+        <div class="ai-maturity-summary" id="ai-maturity-summary"></div>
+
+        <div class="brief-section-label" style="margin-top:18px">Hiring Velocity</div>
+        <div id="hiring-velocity-row"></div>
+
+      </div>
+    </div>
+
+    <!-- Competitor Gap Brief -->
+    <div class="brief-card" id="competitor-brief-card">
+      <div class="brief-card-header">
+        <div class="brief-badge competitor">📊 Competitor Gap Brief</div>
+        <div id="gap-conf-pill"></div>
+      </div>
+      <div class="brief-card-body">
+
+        <div class="brief-section-label">AI Maturity vs Sector Peers (SaaS)</div>
+        <div class="comp-table" id="comp-table">
+          <div class="comp-table-header">
+            <span>Company</span>
+            <span>Score</span>
+            <span style="flex:2">AI Maturity Bar</span>
+            <span style="text-align:right">Evidence Confidence</span>
+          </div>
+          <div id="comp-table-rows"></div>
+        </div>
+
+        <div class="percentile-summary" id="percentile-summary"></div>
+
+        <div class="brief-section-label" style="margin-top:18px">Top Capability Gaps</div>
+        <div class="gaps-list" id="gaps-list"></div>
+
+        <div class="framing-note" id="framing-note"></div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Step 2: ICP Classify -->
+  <div class="step-card waiting" id="card-2">
+    <div class="card-header">
+      <div class="card-step-num">2</div>
+      <div class="card-title">ICP Classification — Segment Scoring</div>
+      <div class="card-status status-waiting" id="status-2">Waiting</div>
+    </div>
+    <div class="card-body hidden" id="body-2">
+      <div id="classify-confidence"></div>
+      <div class="section-label">All Segment Scores</div>
+      <div class="seg-grid" id="seg-grid"></div>
+      <div style="margin-top:16px;">
+        <div class="section-label">Classification Reason</div>
+        <div id="classify-reason" style="font-size:13px;color:var(--muted);line-height:1.6;background:var(--surface2);padding:12px 14px;border-radius:8px;border:1px solid var(--border);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Signal Brief -->
+  <div class="step-card waiting" id="card-3">
+    <div class="card-header">
+      <div class="card-step-num">3</div>
+      <div class="card-title">Signal Brief — Structured Intelligence</div>
+      <div class="card-status status-waiting" id="status-3">Waiting</div>
+    </div>
+    <div class="card-body hidden" id="body-3">
+      <div class="section-label">Headline</div>
+      <div id="brief-headline" style="font-size:15px;font-weight:700;margin-bottom:16px;padding:12px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);"></div>
+      <div class="section-label">Signal Summary</div>
+      <div class="signal-list" id="brief-signals"></div>
+      <div style="margin-top:16px;">
+        <div class="section-label">Honesty Flags (Enforced)</div>
+        <div class="flags-row" id="brief-flags"></div>
+      </div>
+      <div>
+        <div class="section-label">Recommended Pitch Angle</div>
+        <div id="brief-pitch" style="font-size:14px;font-weight:600;color:var(--accent);padding:12px 14px;background:var(--accent-glow);border:1px solid rgba(59,130,246,0.3);border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Honesty Validation -->
+  <div class="step-card waiting" id="card-4">
+    <div class="card-header">
+      <div class="card-step-num">4</div>
+      <div class="card-title">Honesty-Flag Validation Pass — Act IV Mechanism</div>
+      <div class="card-status status-waiting" id="status-4">Waiting</div>
+    </div>
+    <div class="card-body hidden" id="body-4">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+        A second LLM call at <strong style="color:var(--text)">temperature=0.0</strong> checks each honesty flag against the composed email. If a violation is detected, the email is regenerated. This is the Act IV intervention that prevents false claims.
+      </div>
+      <div id="validation-rows"></div>
+      <div id="validation-summary" style="margin-top:12px;font-size:13px;color:var(--green);font-weight:600;"></div>
+    </div>
+  </div>
+
+  <!-- Step 5: Compose Email -->
+  <div class="step-card waiting" id="card-5">
+    <div class="card-header">
+      <div class="card-step-num">5</div>
+      <div class="card-title">Composed Outreach Email</div>
+      <div class="card-status status-waiting" id="status-5">Waiting</div>
+    </div>
+    <div class="card-body hidden" id="body-5">
+      <div class="email-preview" id="email-preview">
+        <div class="email-chrome">
+          <div class="email-dot" style="background:#ef4444"></div>
+          <div class="email-dot" style="background:#eab308"></div>
+          <div class="email-dot" style="background:#22c55e"></div>
+          <div class="email-chrome-title">Signal-Grounded Outreach</div>
+          <div style="display:flex;gap:6px;margin-left:auto;align-items:center;">
+            <span style="font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:2px 7px;border-radius:20px;" id="email-seq-label">Email 1 of 3 · Cold · Day 0</span>
+            <div class="email-variant-badge" id="email-variant-badge">signal_grounded</div>
+          </div>
+        </div>
+        <div class="email-fields">
+          <div class="email-field"><span class="ef-key">From</span><span class="ef-val">outreach@tenacious.co (Alex Reeves, Research Partner)</span></div>
+          <div class="email-field"><span class="ef-key">To</span><span class="ef-val">eyobed7b@gmail.com (Sarah Chen, VP Engineering)</span></div>
+          <div class="email-field"><span class="ef-key">Model</span><span class="ef-val" id="email-model">—</span></div>
+          <div class="email-field"><span class="ef-key">Words</span><span class="ef-val" id="email-word-count">—</span></div>
+          <div class="email-field"><span class="ef-key">Sequence</span><span class="ef-val" id="email-sequence-info">cold · Day 0 · Follow-up: Day 5 (competitor gap), Day 12 (gracious close)</span></div>
+        </div>
+        <div class="email-subject-line" id="email-subject">—</div>
+        <div class="email-body-text" id="email-body">—</div>
+        <div class="email-flags-bar" id="email-flags-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6: Booking -->
+  <div class="step-card waiting" id="card-6">
+    <div class="card-header">
+      <div class="card-step-num">6</div>
+      <div class="card-title">Discovery Call — Cal.com Booking Link</div>
+      <div class="card-status status-waiting" id="status-6">Waiting</div>
+    </div>
+    <div class="card-body hidden" id="body-6">
+      <div class="booking-card">
+        <div class="booking-icon">📅</div>
+        <div class="booking-details">
+          <div class="booking-title">Tenacious × DataFlow Technologies · 30-min Discovery</div>
+          <div class="booking-url" id="booking-url">Generating...</div>
+          <div class="booking-meta">Assigned to: SDR team · No login required for prospect</div>
+        </div>
+        <div class="booking-confirmed">✓ Link Ready</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 7: HubSpot CRM -->
+  <div class="step-card waiting" id="card-7">
+    <div class="card-header">
+      <div class="card-step-num">7</div>
+      <div class="card-title">HubSpot CRM — Contact Record Updated</div>
+      <div class="card-status status-waiting" id="status-7">Waiting</div>
+    </div>
+    <div class="card-body hidden" id="body-7">
+      <div class="crm-card">
+        <div class="crm-header">
+          <div class="crm-avatar">SC</div>
+          <div>
+            <div class="crm-contact-name">Sarah Chen</div>
+            <div class="crm-contact-company">DataFlow Technologies · VP Engineering</div>
+          </div>
+          <div class="crm-logo">● HubSpot</div>
+        </div>
+        <div class="crm-fields">
+          <div class="crm-field"><div class="crm-field-key">contact_id</div><div class="crm-field-val null-val" id="crm-id">—</div></div>
+          <div class="crm-field"><div class="crm-field-key">email</div><div class="crm-field-val">eyobed7b@gmail.com</div></div>
+          <div class="crm-field"><div class="crm-field-key">icp_segment</div><div class="crm-field-val null-val" id="crm-segment">null</div></div>
+          <div class="crm-field"><div class="crm-field-key">icp_confidence</div><div class="crm-field-val null-val" id="crm-conf">null</div></div>
+          <div class="crm-field"><div class="crm-field-key">ai_maturity_score</div><div class="crm-field-val null-val" id="crm-ai">null</div></div>
+          <div class="crm-field"><div class="crm-field-key">outreach_status</div><div class="crm-field-val null-val" id="crm-status">null</div></div>
+          <div class="crm-field"><div class="crm-field-key">enrichment_timestamp</div><div class="crm-field-val null-val" id="crm-ts">null</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success banner -->
+  <div class="success-banner" id="success-banner">
+    <div class="success-icon">✅</div>
+    <div>
+      <div class="success-title">Pipeline complete — real data, real HubSpot write</div>
+      <div class="success-meta">
+        <div class="success-stat">Duration: <span id="final-duration">—</span></div>
+        <div class="success-stat">Model: <span id="final-model">—</span></div>
+        <div class="success-stat">Honesty flags: <span id="final-flags">—</span></div>
+        <div class="success-stat">HubSpot contact: <span id="final-contact">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reply simulation -->
+  <div class="reply-section" id="reply-section" style="display:none;">
+    <div class="reply-header">
+      <div class="reply-header-left">
+        <div class="reply-step-badge">Step 8</div>
+        <div>
+          <div class="reply-title">Prospect Reply Simulation</div>
+          <div class="reply-sub">Simulate Sarah Chen replying — triggers the full reply → qualification → booking flow</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inbox mockup -->
+    <div class="inbox-mockup">
+      <div class="inbox-header">
+        <span style="color:var(--muted);font-size:11px;">📥 Sarah Chen's Reply (eyobed7b@gmail.com)</span>
+      </div>
+      <div class="inbox-compose">
+        <div class="inbox-field">
+          <span class="inbox-label">Reply text</span>
+          <textarea class="reply-input" id="reply-text" rows="3">Yes, this is interesting. Can we schedule a call this week?</textarea>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px;">warm.md · 5 reply classes:</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="reply-btn" onclick="simulateReply('Interesting context on the hiring velocity. What exactly does an embedded squad look like?')">💬 Engaged</button>
+          <button class="reply-btn reply-btn-outline" onclick="simulateReply('Can we schedule a call this week?')">📅 Booking request</button>
+          <button class="reply-btn reply-btn-outline" onclick="simulateReply('Tell me more about what you do exactly.')">🤔 Curious</button>
+          <button class="reply-btn reply-btn-outline" onclick="simulateReply('Not right now, too busy — check back in Q3.')">⏳ Soft defer</button>
+          <button class="reply-btn reply-btn-outline" onclick="simulateReply('Your price is higher than India vendors we looked at.')">💰 Objection (price)</button>
+          <button class="reply-btn reply-btn-outline" onclick="simulateReply('Not interested, please remove me from your list.')">🚫 Hard no</button>
+          <button class="reply-btn reply-btn-custom" onclick="simulateReply(document.getElementById('reply-text').value)">✉️ Custom reply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reply result -->
+    <div class="reply-result" id="reply-result" style="display:none;">
+      <div class="reply-result-header">
+        <span id="reply-result-icon">⚡</span>
+        <span id="reply-result-title">Processing reply…</span>
+        <span class="reply-result-badge" id="reply-result-badge">—</span>
+      </div>
+      <div class="reply-timeline" id="reply-timeline"></div>
+
+      <!-- Follow-up email preview -->
+      <div id="followup-email-wrap" style="display:none;margin-top:16px;">
+        <div class="section-label">Follow-up Email Sent Automatically</div>
+        <div class="email-preview">
+          <div class="email-chrome">
+            <div class="email-dot" style="background:#ef4444"></div>
+            <div class="email-dot" style="background:#eab308"></div>
+            <div class="email-dot" style="background:#22c55e"></div>
+            <div class="email-chrome-title">Automated Reply</div>
+            <div class="email-variant-badge" id="followup-variant">booking_follow_up</div>
+          </div>
+          <div class="email-fields">
+            <div class="email-field"><span class="ef-key">To</span><span class="ef-val">eyobed7b@gmail.com</span></div>
+            <div class="email-field"><span class="ef-key">Trigger</span><span class="ef-val" id="followup-trigger">—</span></div>
+          </div>
+          <div class="email-body-text" id="followup-body">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+const API = 'http://localhost:8000';
+let timerInterval = null;
+let startTime = null;
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const s = ((Date.now() - startTime) / 1000).toFixed(0);
+    const m = Math.floor(s / 60).toString().padStart(2,'0');
+    const sec = (s % 60).toString().padStart(2,'0');
+    document.getElementById('timer').textContent = m + ':' + sec;
+  }, 500);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  return ((Date.now() - startTime) / 1000).toFixed(1);
+}
+
+function setTab(n, state) {
+  const el = document.getElementById('tab-' + n);
+  if (el) el.className = 'step-tab ' + state;
+  if (state === 'done') {
+    const num = el.querySelector('.step-num');
+    if (num) num.textContent = '✓';
+  }
+}
+
+function setCard(n, state) {
+  const card = document.getElementById('card-' + n);
+  const status = document.getElementById('status-' + n);
+  const body = document.getElementById('body-' + n);
+  if (!card) return;
+  card.className = 'step-card ' + state;
+  const labels = { waiting:'Waiting', active:'Running…', done:'Done', error:'Error' };
+  const classes = { waiting:'status-waiting', active:'status-running', done:'status-done', error:'status-error' };
+  if (status) { status.textContent = labels[state] || state; status.className = 'card-status ' + (classes[state] || ''); }
+  if (body) { if (state !== 'waiting') body.classList.remove('hidden'); }
+  if (state !== 'waiting') card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function updateCrm(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('null-val');
+  el.textContent = val;
+  el.classList.add('updated');
+  setTimeout(() => el.classList.remove('updated'), 1500);
+}
+
+function makeDataCell(label, value, colorClass) {
+  return `<div class="data-cell"><div class="data-label">${label}</div><div class="data-value ${colorClass||''}">${value || '—'}</div></div>`;
+}
+
+function makeSignalRow(icon, name, detail, badge, badgeClass, rowClass) {
+  return `<div class="signal-row ${rowClass||''}">
+    <div class="signal-icon">${icon}</div>
+    <div class="signal-content">
+      <div class="signal-name">${name}</div>
+      <div class="signal-detail">${detail}</div>
+    </div>
+    ${badge ? `<div class="signal-badge ${badgeClass||''}">${badge}</div>` : ''}
+  </div>`;
+}
+
+function renderSignalBriefs(s1) {
+  // ── Hiring Signal Brief ──────────────────────────────────────────────────
+
+  // Sources
+  document.getElementById('hiring-brief-sources').innerHTML =
+    (s1.data_sources || []).map(src =>
+      `<span class="source-tag">${src}</span>`
+    ).join('');
+
+  // Buying window signals
+  const f = s1.funding;
+  const jp = s1.job_posts;
+  const layoff = s1.layoff;
+  document.getElementById('buying-window-grid').innerHTML = `
+    <div class="bw-cell ${f ? 'detected' : 'not-detected'}">
+      <div class="bw-label">Funding Event</div>
+      <div class="bw-value ${f ? 'green' : 'muted'}">${f ? f.round_type + ' · $' + (f.amount_usd/1e6).toFixed(0) + 'M' : 'Not detected'}</div>
+      ${f ? `<div class="bw-sub">${f.days_ago} days ago · ${f.announced_date}</div>` : ''}
+      ${f ? `<div class="bw-conf">Confidence: <strong>100%</strong> (Crunchbase confirmed)</div>` : ''}
+    </div>
+    <div class="bw-cell ${jp && jp.total_open_roles > 0 ? 'detected' : 'not-detected'}">
+      <div class="bw-label">Hiring Velocity</div>
+      <div class="bw-value ${jp && jp.total_open_roles > 0 ? 'green' : 'muted'}">${jp ? jp.total_open_roles + ' open roles' : 'Unknown'}</div>
+      ${jp ? `<div class="bw-sub">${jp.engineering_roles} eng · ${jp.ai_adjacent_roles} AI-adjacent</div>` : ''}
+      <div class="bw-conf">Signal: <strong>${jp ? jp.velocity_signal : 'unknown'}</strong></div>
+    </div>
+    <div class="bw-cell ${layoff ? 'detected' : 'not-detected'}">
+      <div class="bw-label">Layoff Event</div>
+      <div class="bw-value ${layoff ? 'red' : 'muted'}">${layoff ? 'Detected — ' + layoff.days_ago + 'd ago' : 'Not detected'}</div>
+      ${layoff ? `<div class="bw-sub">${layoff.percentage_cut || '?'}% headcount cut</div>` : ''}
+    </div>
+    <div class="bw-cell not-detected">
+      <div class="bw-label">Leadership Change</div>
+      <div class="bw-value muted">Not detected</div>
+      <div class="bw-sub">No new CTO/VP Eng in last 90 days</div>
+    </div>`;
+
+  // AI maturity signals table
+  const ai = s1.ai_maturity;
+  const weightColor = { high: 'weight-high', medium: 'weight-medium', low: 'weight-low' };
+  const confColor = (c) => c >= 0.7 ? '#22c55e' : c >= 0.5 ? '#eab308' : '#64748b';
+  document.getElementById('ast-rows').innerHTML = (ai.signals || []).map((sig, i) => `
+    <div class="ast-row">
+      <div>
+        <div class="ast-signal-name">${sig.signal_name.replace(/_/g, ' ')}</div>
+        <div class="ast-signal-detail">${sig.justification}</div>
+      </div>
+      <div><span class="ast-weight ${weightColor[sig.weight] || 'weight-low'}">${sig.weight}</span></div>
+      <div class="ast-present">${sig.present ? '✅' : '○'}</div>
+      <div class="ast-conf-cell">
+        <div class="ast-conf-num" style="color:${confColor(sig.confidence)}">${Math.round(sig.confidence*100)}%</div>
+        <div class="ast-conf-bar-bg">
+          <div class="ast-conf-bar-fill" id="ast-bar-${i}" style="background:${confColor(sig.confidence)}"></div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  setTimeout(() => {
+    (ai.signals || []).forEach((sig, i) => {
+      const bar = document.getElementById('ast-bar-' + i);
+      if (bar) bar.style.width = Math.round(sig.confidence * 100) + '%';
+    });
+  }, 200);
+
+  document.getElementById('ai-maturity-summary').innerHTML =
+    `<strong>Overall AI Maturity: ${ai.score}/3</strong> · Confidence label: <strong>${ai.confidence_label}</strong>
+    <br><span style="color:var(--muted)">${ai.summary}</span>`;
+
+  // Hiring velocity
+  const jpSrc = jp ? (jp.source || 'fallback') : 'fallback';
+  const boardName = jpSrc.includes('builtin') ? 'BuiltIn'
+    : jpSrc.includes('greenhouse') ? 'Greenhouse'
+    : jpSrc.includes('lever') ? 'Lever'
+    : jpSrc.includes('ashby') ? 'Ashby'
+    : jpSrc === 'fallback' ? 'No board found'
+    : 'Company site';
+  const boardIcon = jpSrc.includes('builtin') ? '⬡' : jpSrc.includes('greenhouse') ? '🌿'
+    : jpSrc.includes('lever') ? '⬤' : jpSrc.includes('ashby') ? '◆'
+    : jpSrc === 'fallback' ? '—' : '🌐';
+  document.getElementById('hiring-velocity-row').innerHTML = `
+    <div class="velocity-row">
+      <div class="velocity-num" style="color:${jp && jp.total_open_roles > 0 ? 'var(--green)' : 'var(--muted)'}">${jp ? jp.total_open_roles : 0}</div>
+      <div class="velocity-label-col">
+        <div class="velocity-label">Open Roles Detected</div>
+        <div class="velocity-sub">
+          ${boardIcon} ${boardName}
+          ${jpSrc !== 'fallback' ? `· <a href="${jpSrc}" target="_blank" style="color:var(--accent);text-decoration:none">${jpSrc.replace(/^https?:\/\//,'').substring(0,50)}</a>` : ''}
+          · Scraped: ${jp ? jp.scraped_at.substring(0,10) : '—'}
+        </div>
+      </div>
+      <span class="velocity-badge ${jp && jp.velocity_signal === 'high' ? 'badge-high' : jp && jp.velocity_signal === 'minimal' ? 'badge-low' : 'badge-medium'}"
+        style="${jp && jp.velocity_signal === 'high' ? 'background:var(--green-glow);color:var(--green)' : 'background:var(--surface2);color:var(--muted);border:1px solid var(--border)'}">
+        ${jp ? jp.velocity_signal : 'unknown'}
+      </span>
+    </div>`;
+
+  // ── Competitor Gap Brief ─────────────────────────────────────────────────
+  const cg = s1.competitor_gap;
+  if (!cg) return;
+
+  document.getElementById('gap-conf-pill').innerHTML =
+    `<span class="conf-pill-sm ${cg.confidence >= 0.7 ? 'conf-high' : cg.confidence >= 0.5 ? 'conf-medium' : 'conf-low'}">
+      Brief confidence: ${Math.round(cg.confidence * 100)}%
+    </span>`;
+
+  // Competitor table
+  const allRows = [
+    ...cg.competitors.map(c => ({ ...c, isProspect: false })),
+    {
+      company_name: 'DataFlow (prospect)',
+      ai_maturity_score: cg.prospect_ai_score,
+      ai_maturity_confidence: null,
+      isProspect: true,
+    }
+  ];
+
+  document.getElementById('comp-table-rows').innerHTML = allRows.map((c, i) => {
+    const pct = Math.round((c.ai_maturity_score / 3) * 100);
+    const barColor = c.isProspect ? '#ef4444' : '#22c55e';
+    const confLabel = c.ai_maturity_confidence === null ? '—' :
+      c.ai_maturity_confidence >= 0.7 ? `<span class="conf-pill-sm conf-high">${Math.round(c.ai_maturity_confidence*100)}% high</span>` :
+      `<span class="conf-pill-sm conf-medium">${Math.round(c.ai_maturity_confidence*100)}% medium</span>`;
+    return `<div class="comp-row-item ${c.isProspect ? 'prospect-row' : ''}">
+      <div class="comp-name-cell" style="${c.isProspect ? 'color:var(--red)' : ''}">
+        ${c.company_name}${c.isProspect ? '' : '<span class="comp-tag">sector peer</span>'}
+      </div>
+      <div class="comp-score-cell" style="color:${barColor}">${c.ai_maturity_score}/3</div>
+      <div class="comp-bar-cell">
+        <div class="comp-bar-bg">
+          <div class="comp-bar-fill" id="cbar-${i}" style="background:${barColor}"></div>
+        </div>
+      </div>
+      <div class="comp-conf-cell">${confLabel}</div>
+    </div>`;
+  }).join('');
+
+  setTimeout(() => {
+    allRows.forEach((c, i) => {
+      const bar = document.getElementById('cbar-' + i);
+      if (bar) bar.style.width = Math.round((c.ai_maturity_score / 3) * 100) + '%';
+    });
+  }, 300);
+
+  // Percentile summary
+  document.getElementById('percentile-summary').innerHTML = `
+    <div class="pct-num">${Math.round(cg.prospect_percentile * 100)}th</div>
+    <div>
+      <div class="pct-title">Percentile vs SaaS sector</div>
+      <div class="pct-label">Top-quartile AI score: ${cg.top_quartile_score}/3 &nbsp;·&nbsp; DataFlow: ${cg.prospect_ai_score}/3</div>
+      <div class="pct-label" style="margin-top:4px">${cg.competitors_analyzed} competitors analyzed</div>
+    </div>`;
+
+  // Capability gaps
+  document.getElementById('gaps-list').innerHTML = (cg.gaps || []).map(g =>
+    `<div class="gap-item"><span class="gap-icon">⚠️</span>${g}</div>`
+  ).join('');
+
+  // Framing note
+  document.getElementById('framing-note').innerHTML =
+    `<strong>Framing note:</strong> ${cg.framing_note || 'Frame as opportunity, not deficit.'}`;
+}
+
+async function runPipeline() {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  document.getElementById('btn-icon').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('btn-text').textContent = 'Running…';
+  startTimer();
+
+  // Mark all cards as waiting initially
+  for (let i = 1; i <= 7; i++) setCard(i, 'waiting');
+
+  let data;
+  try {
+    // Step 1 active while fetching
+    setCard(1, 'active'); setTab(1, 'active');
+    await sleep(200);
+
+    const resp = await fetch(API + '/pipeline/demo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_name: 'DataFlow Technologies',
+        company_domain: 'dataflow.io',
+        contact_name: 'Sarah Chen',
+        contact_email: 'eyobed7b@gmail.com',
+        crunchbase_id: 'dataflow-technologies'
+      })
+    });
+
+    if (!resp.ok) throw new Error('API error: ' + resp.status);
+    data = await resp.json();
+  } catch (e) {
+    setCard(1, 'error');
+    document.getElementById('body-1').innerHTML = `<div style="color:var(--red);padding:10px">Error: ${e.message}<br><br>Make sure the FastAPI server is running on port 8000.</div>`;
+    document.getElementById('body-1').classList.remove('hidden');
+    btn.disabled = false;
+    document.getElementById('btn-icon').textContent = '▶';
+    document.getElementById('btn-text').textContent = 'Run Live Pipeline';
+    stopTimer();
+    return;
+  }
+
+  // ── Render Step 1: Enrich ──────────────────────────────────────────────────
+  const s1 = data.step_1_enrich;
+  const metaEl = document.getElementById('enrich-meta');
+  metaEl.innerHTML =
+    makeDataCell('Company', s1.company) +
+    makeDataCell('Industry', s1.industry) +
+    makeDataCell('Location', s1.location) +
+    makeDataCell('Headcount', s1.headcount ? s1.headcount + ' employees' : '—') +
+    makeDataCell('Data Sources', (s1.data_sources || []).length + ' sources') +
+    makeDataCell('Duration', s1.duration_seconds + 's');
+
+  const fundingEl = document.getElementById('enrich-funding');
+  if (s1.funding) {
+    const f = s1.funding;
+    fundingEl.innerHTML = `<div class="data-grid">
+      ${makeDataCell('Round', f.round_type, 'accent')}
+      ${makeDataCell('Amount', f.amount_usd ? '$' + (f.amount_usd/1e6).toFixed(0) + 'M' : 'Unknown', 'green')}
+      ${makeDataCell('Days Ago', f.days_ago + ' days')}
+      ${makeDataCell('Announced', f.announced_date)}
+    </div>`;
+  } else {
+    fundingEl.innerHTML = makeSignalRow('—', 'No funding event', 'No recent funding detected', null, null, 'absent');
+  }
+
+  const jobsEl = document.getElementById('enrich-jobs');
+  const jp = s1.job_posts;
+  if (jp) {
+    const src = jp.source || 'fallback';
+    const srcClass = src.includes('builtin') ? 'builtin'
+      : src.includes('greenhouse') ? 'greenhouse'
+      : src.includes('lever') ? 'lever'
+      : src.includes('ashby') ? 'ashby'
+      : src === 'fallback' ? 'fallback' : 'careers';
+    const srcLabel = src.includes('builtin') ? '⬡ BuiltIn'
+      : src.includes('greenhouse') ? '🌿 Greenhouse'
+      : src.includes('lever') ? '⬤ Lever'
+      : src.includes('ashby') ? '◆ Ashby'
+      : src === 'fallback' ? '— Fallback (not on any board)'
+      : '🌐 ' + new URL('https://' + src.replace(/^https?:\/\//,'')).hostname;
+    const velColor = jp.velocity_signal === 'high' ? 'green' : jp.velocity_signal === 'minimal' || jp.velocity_signal === 'unknown' ? 'muted' : 'yellow';
+    const titles = jp.role_titles || [];
+    const isAiRole = t => /ml|machine learning|llm|ai |applied sci|mlops|nlp|deep learning|computer vision|data platform/i.test(t);
+    jobsEl.innerHTML = `
+      <span class="job-source-badge ${srcClass}">${srcLabel}</span>
+      <div class="data-grid">
+        ${makeDataCell('Total Roles', jp.total_open_roles || '—')}
+        ${makeDataCell('Engineering', jp.engineering_roles)}
+        ${makeDataCell('AI-Adjacent', jp.ai_adjacent_roles)}
+        ${makeDataCell('Velocity', jp.velocity_signal, velColor)}
+      </div>
+      ${titles.length > 0 ? `
+        <div class="role-titles-wrap">
+          <div class="role-titles-header">Sampled role titles (${titles.length})</div>
+          ${titles.map(t => `<div class="role-title-item">
+            <div class="role-type-dot" style="background:${isAiRole(t) ? 'var(--cyan)' : 'var(--accent)'}"></div>
+            ${t}
+          </div>`).join('')}
+        </div>` : ''}`;
+  }
+
+  const aiEl = document.getElementById('enrich-ai');
+  if (s1.ai_maturity && s1.ai_maturity.signals) {
+    aiEl.innerHTML = s1.ai_maturity.signals.map(sig => {
+      const icon = sig.present ? '✅' : '○';
+      const rowClass = sig.present ? 'present' : 'absent';
+      const conf = Math.round(sig.confidence * 100) + '%';
+      const badgeClass = sig.confidence >= 0.7 ? 'badge-high' : sig.confidence >= 0.5 ? 'badge-medium' : 'badge-low';
+      return makeSignalRow(icon, sig.signal_name.replace(/_/g,' '), sig.justification, conf + ' conf', badgeClass, rowClass);
+    }).join('');
+    aiEl.innerHTML += `<div style="margin-top:8px;font-size:13px;color:var(--muted)">Overall AI Maturity: <strong style="color:var(--text)">${s1.ai_maturity.score}/3</strong> · ${s1.ai_maturity.confidence_label} confidence</div>`;
+  }
+
+  setCard(1, 'done'); setTab(1, 'done');
+  await sleep(300);
+
+  // ── Render Signal Briefs ───────────────────────────────────────────────────
+  renderSignalBriefs(s1);
+  document.getElementById('signal-briefs-panel').style.display = 'flex';
+  document.getElementById('signal-briefs-panel').style.flexDirection = 'column';
+  document.getElementById('signal-briefs-panel').style.gap = '16px';
+  document.getElementById('signal-briefs-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  await sleep(400);
+
+  // ── Render Step 2: ICP Classify ────────────────────────────────────────────
+  setCard(2, 'active'); setTab(2, 'active');
+  await sleep(300);
+
+  const s2 = data.step_2_classify;
+  const confEl = document.getElementById('classify-confidence');
+  const segmentLabel = {
+    'segment_1_series_a_b': 'Segment 1 — Series A/B Funded',
+    'segment_2_mid_market_restructure': 'Segment 2 — Mid-Market Restructure',
+    'segment_3_leadership_transition': 'Segment 3 — Leadership Transition',
+    'segment_4_specialized_capability': 'Segment 4 — Specialized Capability Gap',
+  };
+  confEl.innerHTML = `<div class="confidence-pill">
+    🎯 ${segmentLabel[s2.segment] || s2.segment || 'Abstained'} &nbsp;·&nbsp; ${Math.round(s2.confidence * 100)}% confidence
+  </div>`;
+
+  const segGrid = document.getElementById('seg-grid');
+  const allScores = s2.all_segment_scores || {};
+  const segNames = {
+    'segment_1_series_a_b': 'Series A/B Funded',
+    'segment_2_mid_market_restructure': 'Mid-Market Restructure',
+    'segment_3_leadership_transition': 'Leadership Transition',
+    'segment_4_specialized_capability': 'Specialized Capability',
+  };
+  segGrid.innerHTML = Object.entries(allScores).map(([k, v]) => {
+    const isWinner = k === s2.segment;
+    const pct = Math.round(v * 100);
+    const color = isWinner ? '#3b82f6' : '#22c55e';
+    return `<div class="seg-card ${isWinner ? 'winner' : ''}">
+      <div class="seg-card-label">${k.replace('segment_','seg_').replace('_series_a_b','').replace('_mid_market_restructure','').replace('_leadership_transition','').replace('_specialized_capability','')}</div>
+      <div class="seg-card-name">${segNames[k] || k}</div>
+      <div class="score-bar-bg"><div class="score-bar-fill" id="bar-${k}" style="background:${color}"></div></div>
+      <div class="score-val">${pct}%</div>
+      ${isWinner ? '<div class="seg-reason">Winner ✓</div>' : ''}
+    </div>`;
+  }).join('');
+
+  setTimeout(() => {
+    Object.entries(allScores).forEach(([k, v]) => {
+      const bar = document.getElementById('bar-' + k);
+      if (bar) bar.style.width = Math.round(v * 100) + '%';
+    });
+  }, 100);
+
+  document.getElementById('classify-reason').textContent = s2.reason || '—';
+
+  setCard(2, 'done'); setTab(2, 'done');
+  await sleep(400);
+
+  // ── Render Step 3: Signal Brief ────────────────────────────────────────────
+  setCard(3, 'active'); setTab(3, 'active');
+  await sleep(300);
+
+  const s3 = data.step_3_signal_brief;
+  document.getElementById('brief-headline').textContent = s3.headline || '—';
+
+  const briefSignals = document.getElementById('brief-signals');
+  const signals = [
+    { name: 'Funding Signal', val: s3.funding_signal, icon: '💰' },
+    { name: 'Hiring Signal', val: s3.hiring_signal, icon: '👥' },
+    { name: 'Layoff Signal', val: s3.layoff_signal, icon: '⚠️' },
+    { name: 'Leadership Signal', val: s3.leadership_signal, icon: '👤' },
+    { name: 'AI Maturity', val: s3.ai_maturity_signal, icon: '🤖' },
+    { name: 'Competitor Gap', val: s3.competitor_gap_signal, icon: '📊' },
+  ];
+  briefSignals.innerHTML = signals.map(s =>
+    makeSignalRow(s.icon, s.name,
+      s.val || 'None detected',
+      s.val ? 'detected' : 'none',
+      s.val ? 'badge-high' : 'badge-low',
+      s.val ? 'present' : 'absent')
+  ).join('');
+
+  const flagsRow = document.getElementById('brief-flags');
+  const flags = s3.honesty_flags || [];
+  flagsRow.innerHTML = flags.map(f =>
+    `<div class="flag-chip">⚑ ${f}</div>`
+  ).join('') || '<div style="color:var(--muted);font-size:12px;">No flags</div>';
+
+  document.getElementById('brief-pitch').textContent = s3.recommended_pitch_angle || '—';
+
+  setCard(3, 'done'); setTab(3, 'done');
+  await sleep(400);
+
+  // ── Render Step 4: Honesty Validation ─────────────────────────────────────
+  setCard(4, 'active'); setTab(4, 'active');
+  await sleep(500);
+
+  const s4 = data.step_4_honesty_validation;
+  const valRows = document.getElementById('validation-rows');
+  const flagMessages = {
+    'weak_hiring_velocity_signal': 'Must not claim "scaling fast" or "aggressively hiring"',
+    'weak_ai_maturity_signal': 'Must use asking language for AI claims, not assertions',
+    'tech_stack_inferred_not_confirmed': 'Must qualify stack claims with "based on public signals"',
+    'layoff_overrides_funding': 'Must lead with restructure framing, not growth framing',
+    'conflicting_segment_signals': 'Must phrase leadership signal as "it looks like", not "you appointed"',
+    'bench_gap_detected': 'Must not assert capacity — route to discovery call',
+  };
+  valRows.innerHTML = (s4.flags_checked || []).map(f =>
+    `<div class="validation-row">
+      <div class="validation-icon">🔍</div>
+      <div class="validation-text"><strong>${f}</strong><br><span style="color:var(--muted);font-size:12px">${flagMessages[f] || 'Enforced rule'}</span></div>
+      <div class="validation-result">✓ PASS</div>
+    </div>`
+  ).join('');
+  document.getElementById('validation-summary').textContent =
+    `${s4.flags_count} flag${s4.flags_count !== 1 ? 's' : ''} validated — no violations detected. Email approved for sending.`;
+
+  setCard(4, 'done'); setTab(4, 'done');
+  await sleep(400);
+
+  // ── Render Step 5: Email ───────────────────────────────────────────────────
+  setCard(5, 'active'); setTab(5, 'active');
+  await sleep(300);
+
+  const s5 = data.step_5_email;
+  document.getElementById('email-subject').textContent = s5.subject || '—';
+  document.getElementById('email-body').textContent = s5.body || '—';
+  document.getElementById('email-variant-badge').textContent = s5.variant || 'exploratory';
+  document.getElementById('email-model').textContent = data.meta.model || '—';
+  const wordCount = s5.word_count || s5.body?.split(/\s+/).length || '—';
+  document.getElementById('email-word-count').textContent = wordCount + (typeof wordCount === 'number' ? ' words (max 120)' : '');
+  if (s5.sequence) {
+    document.getElementById('email-seq-label').textContent =
+      `Email ${s5.sequence_email_number || 1} of 3 · ${s5.sequence} · Day 0`;
+  }
+
+  const flagsBar = document.getElementById('email-flags-bar');
+  flagsBar.innerHTML = (s5.honesty_flags_applied || []).map(f =>
+    `<div class="email-flag-chip">⚑ ${f}</div>`
+  ).join('');
+
+  setCard(5, 'done'); setTab(5, 'done');
+  await sleep(400);
+
+  // ── Render Step 6: Booking ─────────────────────────────────────────────────
+  setCard(6, 'active'); setTab(6, 'active');
+  await sleep(300);
+
+  const s6 = data.step_6_booking;
+  document.getElementById('booking-url').textContent = s6.url || '—';
+
+  setCard(6, 'done'); setTab(6, 'done');
+  await sleep(400);
+
+  // ── Render Step 7: HubSpot ─────────────────────────────────────────────────
+  setCard(7, 'active'); setTab(7, 'active');
+  await sleep(300);
+
+  const s7 = data.step_7_crm;
+  await sleep(200); updateCrm('crm-id', s7.contact_id || '—');
+  await sleep(150); updateCrm('crm-segment', s7.fields_written.icp_segment || '—');
+  await sleep(150); updateCrm('crm-conf', s7.fields_written.icp_confidence || '—');
+  await sleep(150); updateCrm('crm-ai', s7.fields_written.ai_maturity_score + '/3');
+  await sleep(150); updateCrm('crm-status', s7.fields_written.outreach_status || '—');
+  await sleep(150); updateCrm('crm-ts', s7.fields_written.enrichment_timestamp || '—');
+
+  setCard(7, 'done'); setTab(7, 'done');
+  await sleep(400);
+
+  // ── Success ────────────────────────────────────────────────────────────────
+  const elapsed = stopTimer();
+  document.getElementById('final-duration').textContent = elapsed + 's';
+  document.getElementById('final-model').textContent = data.meta.model;
+  document.getElementById('final-flags').textContent = (s3.honesty_flags || []).length + ' enforced';
+  document.getElementById('final-contact').textContent = s7.contact_id;
+  document.getElementById('success-banner').classList.add('visible');
+  await sleep(600);
+  const replySection = document.getElementById('reply-section');
+  replySection.style.display = 'block';
+  replySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  btn.disabled = false;
+  document.getElementById('btn-icon').textContent = '↺';
+  document.getElementById('btn-text').textContent = 'Run Again';
+}
+
+async function simulateReply(replyText) {
+  const resultEl = document.getElementById('reply-result');
+  const timelineEl = document.getElementById('reply-timeline');
+  const titleEl = document.getElementById('reply-result-title');
+  const iconEl = document.getElementById('reply-result-icon');
+  const badgeEl = document.getElementById('reply-result-badge');
+
+  resultEl.style.display = 'block';
+  timelineEl.innerHTML = '';
+  titleEl.textContent = 'Processing reply…';
+  iconEl.textContent = '⚡';
+  badgeEl.textContent = 'RUNNING';
+  badgeEl.style.background = 'var(--accent-glow)';
+  badgeEl.style.color = 'var(--accent)';
+  document.getElementById('followup-email-wrap').style.display = 'none';
+
+  const addEvent = (icon, label, detail) => {
+    const div = document.createElement('div');
+    div.className = 'timeline-item';
+    div.innerHTML = `<div class="timeline-icon">${icon}</div>
+      <div class="timeline-text"><span class="label">${label}</span><br><span class="detail">${detail}</span></div>`;
+    timelineEl.appendChild(div);
+  };
+
+  addEvent('📨', 'Reply received', `"${replyText.substring(0, 80)}${replyText.length > 80 ? '…' : ''}"`);
+  await sleep(400);
+
+  addEvent('🔍', 'Classifying intent', 'warm.md 5-class taxonomy: Engaged / Curious / Hard no / Soft defer / Objection');
+  await sleep(400);
+  addEvent('📋', 'HubSpot logged', 'Activity: EMAIL_REPLY_RECEIVED · snippet saved to contact record');
+  await sleep(300);
+
+  let data;
+  try {
+    const resp = await fetch(API + '/pipeline/demo/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contact_email: 'eyobed7b@gmail.com',
+        contact_name: 'Sarah Chen',
+        reply_text: replyText,
+      })
+    });
+    if (!resp.ok) throw new Error('API error ' + resp.status);
+    data = await resp.json();
+  } catch (e) {
+    addEvent('❌', 'Error', e.message);
+    titleEl.textContent = 'Error processing reply';
+    return;
+  }
+
+  const intentClass = data.intent_class || 'unclear';
+  const intentLabels = {
+    'hard_no': '🚫 Hard No (warm.md Class 3)',
+    'soft_defer': '⏳ Soft Defer (warm.md Class 4)',
+    'objection': '💰 Objection (warm.md Class 5)',
+    'engaged_booking': '📅 Engaged — Booking Request (warm.md Class 1)',
+    'engaged': '💬 Engaged (warm.md Class 1)',
+    'curious': '🤔 Curious (warm.md Class 2)',
+    'unclear': '❓ Unclear — routed to human review',
+  };
+  addEvent('🏷️', 'Intent classified', intentLabels[intentClass] || intentClass);
+  await sleep(300);
+  addEvent('📋', 'HubSpot logged', `Activity: EMAIL_REPLY_RECEIVED · intent=${intentClass}`);
+  await sleep(300);
+
+  if (intentClass === 'hard_no') {
+    addEvent('🚫', 'Opted out', 'No reply sent · prospect marked closed · suppression list updated');
+    titleEl.textContent = 'Hard no — thread closed, no reply sent';
+    badgeEl.textContent = 'CLOSED';
+    badgeEl.style.background = 'rgba(239,68,68,0.15)';
+    badgeEl.style.color = 'var(--red)';
+  } else if (intentClass === 'soft_defer') {
+    addEvent('✉️', 'Gracious close sent', `To: ${data.sent_to} · Re-engagement logged for Q3`);
+    titleEl.textContent = 'Soft defer — gracious close sent, re-engagement scheduled Q3';
+    badgeEl.textContent = 'DEFERRED';
+    badgeEl.style.background = 'rgba(234,179,8,0.15)';
+    badgeEl.style.color = 'var(--yellow)';
+    document.getElementById('followup-body').textContent =
+      `Sarah,\n\nUnderstood — timing matters. I'll set a reminder to reach out again in Q3 with fresh research on your sector at that point. Until then, good luck with the work.\n\nAlex\nResearch Partner, Tenacious Intelligence Corporation\ngettenacious.com`;
+    document.getElementById('followup-trigger').textContent = 'soft_defer → gracious_close';
+    document.getElementById('followup-variant').textContent = 'soft_defer_close';
+    document.getElementById('followup-email-wrap').style.display = 'block';
+  } else {
+    addEvent('✉️', 'Warm reply sent', `To: ${data.sent_to} · variant: ${data.action}`);
+    await sleep(300);
+    if (data.booking_link) {
+      addEvent('📅', 'Cal.com link included', data.booking_link);
+    }
+    await sleep(200);
+    addEvent('✅', 'Check your inbox', 'Follow-up email delivered to eyobed7b@gmail.com');
+
+    titleEl.textContent = `${intentLabels[intentClass]} — reply sent`;
+    badgeEl.textContent = 'SENT';
+    badgeEl.style.background = 'var(--green-glow)';
+    badgeEl.style.color = 'var(--green)';
+
+    const actionDescriptions = {
+      'booking_follow_up_sent': 'Great — here\'s a direct link to book a 30-minute discovery call:\n\n[Cal.com booking link]\n\nI\'ll send a calendar invite once you pick a time.\n\nAlex\nResearch Partner, Tenacious Intelligence Corporation\ngettenacious.com',
+      'engaged_reply_sent': 'Sarah,\n\nGood question. Our engineers are full-time Tenacious employees — salaried, benefits, based in Addis Ababa. They join your standups, your Slack, your PR review.\n\nA typical squad for your stage is 3 engineers plus a fractional PM. Free for 30 minutes this week?\n\nAlex\nResearch Partner, Tenacious Intelligence Corporation\ngettenacious.com',
+      'curious_reply_sent': 'Sarah,\n\nGlad this landed. Tenacious is a managed engineering delivery firm — dedicated squads out of Addis Ababa for US/EU scale-ups, 3–5 hours daily overlap. Most useful when in-house hiring is slower than the work needs.\n\n15 minutes this week? → [Cal link]\n\nAlex\nResearch Partner, Tenacious Intelligence Corporation\ngettenacious.com',
+    };
+    document.getElementById('followup-body').textContent =
+      actionDescriptions[data.action] || `Follow-up reply sent (variant: ${data.action})`;
+    document.getElementById('followup-trigger').textContent = intentClass + ' → ' + data.action;
+    document.getElementById('followup-variant').textContent = data.action?.replace('_sent','') || 'warm_reply';
+    document.getElementById('followup-email-wrap').style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

@@ -63,13 +63,13 @@ class NurtureStateMachine:
 
         new_state = state_map.get(event)
         if not new_state:
-            log.warning("invalid_event", event=event)
+            log.warning("invalid_event", transition=event)
             return current
 
         allowed = TRANSITIONS.get(current, [])
         if new_state not in allowed:
             log.warning("invalid_transition",
-                        current=current, event=event, new_state=new_state)
+                        current=current, transition=event, new_state=new_state)
             return current
 
         data["state"] = new_state
